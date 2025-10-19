@@ -1,0 +1,38 @@
+{
+  "name": "vite-plugin-xagi-monitor",
+  "version": "0.1.0",
+  "description": "Vite plugin for monitoring errors, logs and HMR updates in development",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "keywords": [
+    "vite",
+    "plugin",
+    "monitor",
+    "error-tracking",
+    "hmr",
+    "devtools"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dongdada29/vite-plugin-xagi-monitor.git"
+  },
+  "peerDependencies": {
+    "vite": "^5.0.0 || ^6.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "vite": "^6.0.0"
+  }
+}
+

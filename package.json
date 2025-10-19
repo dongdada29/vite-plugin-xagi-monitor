@@ -10,7 +10,14 @@
   ],
   "scripts": {
     "build": "tsc",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "test:integration": "vitest run tests/integration",
+    "test:e2e": "vitest run tests/e2e",
+    "test:unit": "vitest run tests/unit"
   },
   "keywords": [
     "vite",
@@ -32,8 +39,12 @@
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@types/ws": "^8.0.0",
+    "@vitest/coverage-v8": "^1.0.0",
+    "@vitest/ui": "^1.0.0",
+    "jsdom": "^23.0.0",
     "typescript": "^5.0.0",
     "vite": "^6.0.0",
+    "vitest": "^1.0.0",
     "ws": "^8.0.0"
   }
 }

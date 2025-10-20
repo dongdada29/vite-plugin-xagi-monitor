@@ -18,6 +18,7 @@
     "test:integration": "vitest run tests/integration",
     "test:e2e": "vitest run tests/e2e",
     "test:unit": "vitest run tests/unit",
+    "play:install": "pnpm -C playground/console-demo install --force && pnpm -C playground/design-demo install --force && pnpm -C playground/error-demo install --force && pnpm -C playground/whitescreen-demo install --force && pnpm -C playground/full-demo install --force",
     "play:console": "pnpm -C playground/console-demo dev",
     "play:design": "pnpm -C playground/design-demo dev",
     "play:error": "pnpm -C playground/error-demo dev",

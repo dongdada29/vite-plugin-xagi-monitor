@@ -18,11 +18,11 @@
     "test:integration": "vitest run tests/integration",
     "test:e2e": "vitest run tests/e2e",
     "test:unit": "vitest run tests/unit",
-    "play:dev": "vite example",
-    "play:dev:open": "vite example --open",
-    "play:dev:host": "vite example --host --open --strictPort --port 5173",
-    "play:build": "vite build example",
-    "play:preview": "vite preview --open --strictPort --port 5050"
+    "play:console": "pnpm -C playground/console-demo dev",
+    "play:design": "pnpm -C playground/design-demo dev",
+    "play:error": "pnpm -C playground/error-demo dev",
+    "play:whitescreen": "pnpm -C playground/whitescreen-demo dev",
+    "play:full": "pnpm -C playground/full-demo dev"
   },
   "keywords": [
     "vite",
@@ -53,4 +53,3 @@
     "ws": "^8.0.0"
   }
 }
-

@@ -9,14 +9,25 @@ export class TerminalInterceptor {
   private logs: RemoteLogEntry[] = [];
   private subscribers: ((log: RemoteLogEntry) => void)[] = [];
   private isEnabled = false;
+  private isRunning = false; // 添加运行状态属性
+  private originalStdoutWrite?: any;
+  private originalStderrWrite?: any;
+  private originalConsoleMethods?: {
+    log?: any;
+    warn?: any;
+    error?: any;
+    info?: any;
+    debug?: any;
+  };
 
   constructor(config: RemoteConsoleConfig = {}) {
     this.config = {
       enabled: false,
       port: 3001,
       persistLogs: false,
-      maxLogs: 1000,
+      maxLogs: 2000,
       logLevels: ['info', 'warn', 'error', 'debug'],
+      debug: false,
       ...config
     };
   }
@@ -25,9 +36,10 @@ export class TerminalInterceptor {
    * 启动终端日志拦截
    */
   start() {
-    if (this.isEnabled || !this.config.enabled) return;
+    if (this.isRunning) return;
 
     this.isEnabled = true;
+    this.isRunning = true;
     this.setupProcessInterception();
     this.setupConsoleInterception();
 
@@ -41,6 +53,22 @@ export class TerminalInterceptor {
    */
   stop() {
     this.isEnabled = false;
+    this.isRunning = false;
+
+    // 恢复原始方法
+    if (this.originalStdoutWrite) {
+      process.stdout.write = this.originalStdoutWrite;
+    }
+    if (this.originalStderrWrite) {
+      process.stderr.write = this.originalStderrWrite;
+    }
+    if (this.originalConsoleMethods) {
+      console.log = this.originalConsoleMethods.log!;
+      console.warn = this.originalConsoleMethods.warn!;
+      console.error = this.originalConsoleMethods.error!;
+      console.info = this.originalConsoleMethods.info!;
+      console.debug = this.originalConsoleMethods.debug!;
+    }
 
     if (this.config.debug) {
       console.log('[Terminal Interceptor] 终端日志拦截已停止');
@@ -51,33 +79,93 @@ export class TerminalInterceptor {
    * 设置进程输出拦截
    */
   private setupProcessInterception() {
+    // 保存原始方法
+    this.originalStdoutWrite = process.stdout.write.bind(process.stdout);
+    this.originalStderrWrite = process.stderr.write.bind(process.stderr);
+
     // 拦截 stdout
-    const originalStdoutWrite = process.stdout.write.bind(process.stdout);
     process.stdout.write = (chunk: any, encoding?: any, callback?: any) => {
-      if (typeof chunk === 'string' && this.isEnabled) {
-        this.addLog({
-          level: 'info',
-          message: chunk.trim(),
-          timestamp: Date.now(),
-          source: 'stdout'
-        });
+      try {
+        if (typeof chunk === 'string' && this.isEnabled) {
+          // 处理多行日志
+          const lines = chunk.split('\n').filter(line => line.trim());
+          lines.forEach(line => {
+            const level = this.detectLogLevel(line);
+            this.addLog({
+              level,
+              message: line.trim(),
+              timestamp: Date.now(),
+              source: 'stdout'
+            });
+          });
+        }
+        return this.originalStdoutWrite!(chunk, encoding, callback);
+      } catch (error) {
+        // 如果拦截过程中出错，仍然调用原始方法
+        return this.originalStdoutWrite!(chunk, encoding, callback);
       }
-      return originalStdoutWrite(chunk, encoding, callback);
     };
 
     // 拦截 stderr
-    const originalStderrWrite = process.stderr.write.bind(process.stderr);
     process.stderr.write = (chunk: any, encoding?: any, callback?: any) => {
-      if (typeof chunk === 'string' && this.isEnabled) {
-        this.addLog({
-          level: 'error',
-          message: chunk.trim(),
-          timestamp: Date.now(),
-          source: 'stderr'
-        });
+      try {
+        if (typeof chunk === 'string' && this.isEnabled) {
+          // 处理多行日志
+          const lines = chunk.split('\n').filter(line => line.trim());
+          lines.forEach(line => {
+            const level = this.detectLogLevel(line);
+            this.addLog({
+              level,
+              message: line.trim(),
+              timestamp: Date.now(),
+              source: 'stderr'
+            });
+          });
+        }
+        return this.originalStderrWrite!(chunk, encoding, callback);
+      } catch (error) {
+        // 如果拦截过程中出错，仍然调用原始方法
+        return this.originalStderrWrite!(chunk, encoding, callback);
       }
-      return originalStderrWrite(chunk, encoding, callback);
     };
+  }
+
+  /**
+   * 检测日志级别
+   */
+  private detectLogLevel(message: string): string {
+    const lowerMessage = message.toLowerCase();
+
+    // 检测标准日志级别
+    if (lowerMessage.includes('[error]') || lowerMessage.includes('error:')) {
+      return 'error';
+    }
+    if (lowerMessage.includes('[warn]') || lowerMessage.includes('warning:')) {
+      return 'warn';
+    }
+    if (lowerMessage.includes('[debug]') || lowerMessage.includes('debug:')) {
+      return 'debug';
+    }
+    if (lowerMessage.includes('[info]') || lowerMessage.includes('info:')) {
+      return 'info';
+    }
+
+    // 检测 Vite 特定的日志级别
+    if (lowerMessage.includes('vite:error')) {
+      return 'error';
+    }
+    if (lowerMessage.includes('vite:warn')) {
+      return 'warn';
+    }
+    if (lowerMessage.includes('vite:debug')) {
+      return 'debug';
+    }
+    if (lowerMessage.includes('vite:info')) {
+      return 'info';
+    }
+
+    // 默认级别
+    return 'info';
   }
 
   /**
@@ -85,11 +173,13 @@ export class TerminalInterceptor {
    */
   private setupConsoleInterception() {
     // 保存原始方法
-    const originalLog = console.log.bind(console);
-    const originalWarn = console.warn.bind(console);
-    const originalError = console.error.bind(console);
-    const originalInfo = console.info.bind(console);
-    const originalDebug = console.debug.bind(console);
+    this.originalConsoleMethods = {
+      log: console.log.bind(console),
+      warn: console.warn.bind(console),
+      error: console.error.bind(console),
+      info: console.info.bind(console),
+      debug: console.debug.bind(console)
+    };
 
     // 拦截 console.log
     console.log = (...args: any[]) => {
@@ -105,7 +195,7 @@ export class TerminalInterceptor {
         data: args.length > 1 ? args : undefined
       });
 
-      originalLog(...args);
+      this.originalConsoleMethods!.log!(...args);
     };
 
     // 拦截 console.warn
@@ -122,7 +212,7 @@ export class TerminalInterceptor {
         data: args.length > 1 ? args : undefined
       });
 
-      originalWarn(...args);
+      this.originalConsoleMethods!.warn!(...args);
     };
 
     // 拦截 console.error
@@ -139,7 +229,7 @@ export class TerminalInterceptor {
         data: args.length > 1 ? args : undefined
       });
 
-      originalError(...args);
+      this.originalConsoleMethods!.error!(...args);
     };
 
     // 拦截 console.info
@@ -156,7 +246,7 @@ export class TerminalInterceptor {
         data: args.length > 1 ? args : undefined
       });
 
-      originalInfo(...args);
+      this.originalConsoleMethods!.info!(...args);
     };
 
     // 拦截 console.debug
@@ -173,25 +263,30 @@ export class TerminalInterceptor {
         data: args.length > 1 ? args : undefined
       });
 
-      originalDebug(...args);
+      this.originalConsoleMethods!.debug!(...args);
     };
   }
 
   /**
-   * 添加日志
+   * 添加日志（公开方法）
    */
-  private addLog(log: RemoteLogEntry) {
+  addLog(log: RemoteLogEntry) {
     // 检查日志级别过滤
     if (this.config.logLevels && !this.config.logLevels.includes(log.level)) {
       return;
     }
 
-    // 添加到日志数组
-    this.logs.push(log);
+    // 如果 persistLogs 为 false，只保留最新的一条日志
+    if (!this.config.persistLogs) {
+      this.logs = [log];
+    } else {
+      // 添加到日志数组
+      this.logs.push(log);
 
-    // 限制日志数量
-    if (this.logs.length > this.config.maxLogs) {
-      this.logs = this.logs.slice(-this.config.maxLogs);
+      // 限制日志数量
+      if (this.logs.length > this.config.maxLogs) {
+        this.logs = this.logs.slice(-this.config.maxLogs);
+      }
     }
 
     // 通知订阅者
@@ -297,18 +392,30 @@ export class TerminalInterceptor {
   getStats() {
     const stats = {
       total: this.logs.length,
-      byLevel: {} as Record<string, number>,
-      bySource: {} as Record<string, number>,
+      byLevel: {
+        info: 0,
+        warn: 0,
+        error: 0,
+        debug: 0
+      },
+      bySource: {
+        stdout: 0,
+        stderr: 0
+      },
       recentCount: 0
     };
 
     // 统计按级别分组
     this.logs.forEach(log => {
-      const level = log.level || 'unknown';
-      const source = log.source || 'unknown';
+      const level = log.level || 'info';
+      const source = log.source || 'stdout';
 
-      stats.byLevel[level] = (stats.byLevel[level] || 0) + 1;
-      stats.bySource[source] = (stats.bySource[source] || 0) + 1;
+      if (stats.byLevel.hasOwnProperty(level)) {
+        stats.byLevel[level]++;
+      }
+      if (stats.bySource.hasOwnProperty(source)) {
+        stats.bySource[source]++;
+      }
 
       // 统计最近5分钟的日志
       if (Date.now() - log.timestamp < 5 * 60 * 1000) {
@@ -317,5 +424,69 @@ export class TerminalInterceptor {
     });
 
     return stats;
+  }
+
+  /**
+   * 获取最近的日志
+   */
+  getRecentLogs(limit: number): RemoteLogEntry[] {
+    return this.logs.slice(-limit);
+  }
+
+  /**
+   * 按级别获取日志
+   */
+  getLogsByLevel(level: string): RemoteLogEntry[] {
+    return this.logs.filter(log => log.level === level);
+  }
+
+  /**
+   * 按多个级别获取日志
+   */
+  getLogsByLevels(levels: string[]): RemoteLogEntry[] {
+    return this.logs.filter(log => levels.includes(log.level));
+  }
+
+  /**
+   * 按来源获取日志
+   */
+  getLogsBySource(source: string): RemoteLogEntry[] {
+    return this.logs.filter(log => log.source === source);
+  }
+
+  /**
+   * 按时间范围获取日志
+   */
+  getLogsByTimeRange(startTime: number, endTime: number): RemoteLogEntry[] {
+    return this.logs.filter(log => log.timestamp >= startTime && log.timestamp <= endTime);
+  }
+
+  /**
+   * 搜索日志内容
+   */
+  searchLogs(searchTerm: string): RemoteLogEntry[] {
+    const term = searchTerm.toLowerCase();
+    return this.logs.filter(log => log.message.toLowerCase().includes(term));
+  }
+
+  /**
+   * 获取日志总数
+   */
+  getLogCount(): number {
+    return this.logs.length;
+  }
+
+  /**
+   * 按级别获取日志数量
+   */
+  getLogCountByLevel(level: string): number {
+    return this.logs.filter(log => log.level === level).length;
+  }
+
+  /**
+   * 获取统计信息（别名方法）
+   */
+  getStatistics() {
+    return this.getStats();
   }
 }

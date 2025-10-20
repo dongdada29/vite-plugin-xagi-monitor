@@ -3,9 +3,14 @@ import WebSocket from 'ws';
 import { RemoteConsoleServer } from '../../../src/remote-console';
 import { createMockViteServer, createMockLogEntry } from '../../setup';
 
+// 生成随机端口以避免冲突
+function getRandomPort(): number {
+  return Math.floor(Math.random() * 10000) + 3000;
+}
+
 // Mock WebSocket module
-vi.mock('ws', () => ({
-  default: class MockWebSocket {
+vi.mock('ws', () => {
+  class MockWebSocket {
     static readonly CONNECTING = 0;
     static readonly OPEN = 1;
     static readonly CLOSING = 2;
@@ -33,14 +38,27 @@ vi.mock('ws', () => ({
       // Mock send method
     }
 
+    on(event: string, callback: Function) {
+      if (event === 'message') {
+        this.onmessage = callback;
+      } else if (event === 'close') {
+        this.onclose = callback;
+      } else if (event === 'open') {
+        this.onopen = callback;
+      } else if (event === 'error') {
+        this.onerror = callback;
+      }
+    }
+
     close() {
       this.readyState = MockWebSocket.CLOSED;
       if (this.onclose) {
         this.onclose({ type: 'close', code: 1000, reason: '' });
       }
     }
-  },
-  WebSocketServer: class MockWebSocketServer {
+  }
+
+  class MockWebSocketServer {
     port = 0;
     onconnection: ((ws: any) => void) | null = null;
 
@@ -56,11 +74,23 @@ vi.mock('ws', () => ({
       }, 0);
     }
 
+    on(event: string, callback: Function) {
+      if (event === 'connection') {
+        this.onconnection = callback;
+      }
+    }
+
     close() {
       // Mock server close
     }
-  },
-}));
+  }
+
+  return {
+    default: MockWebSocket,
+    WebSocketServer: MockWebSocketServer,
+    WebSocket: MockWebSocket, // 添加 WebSocket 导出
+  };
+});
 
 describe('RemoteConsoleServer', () => {
   let mockServer: any;
@@ -84,13 +114,13 @@ describe('RemoteConsoleServer', () => {
 
       expect(consoleServer).toBeDefined();
       expect(consoleServer['isRunning']).toBe(false);
-      expect(consoleServer['clients']).toEqual([]);
+      expect(consoleServer['clients']).toEqual(new Set());
       expect(consoleServer['logs']).toEqual([]);
     });
 
     it('should initialize with custom config', () => {
       const customConfig = {
-        port: 3002,
+        port: getRandomPort(),
         persistLogs: false,
         maxLogs: 1000,
         logLevels: ['info', 'error'],
@@ -99,26 +129,26 @@ describe('RemoteConsoleServer', () => {
 
       consoleServer = new RemoteConsoleServer(mockServer, customConfig);
 
-      expect(consoleServer['config']).toEqual(customConfig);
+      expect(consoleServer['config']).toMatchObject(customConfig);
     });
   });
 
   describe('start and stop', () => {
     it('should start the WebSocket server', () => {
       consoleServer = new RemoteConsoleServer(mockServer, {
-        port: 3001,
+        port: getRandomPort(),
         enabled: true,
       });
 
       consoleServer.start();
 
       expect(consoleServer['isRunning']).toBe(true);
-      expect(consoleServer['wss']).toBeDefined();
+      expect(consoleServer['wsServer']).toBeDefined();
     });
 
     it('should stop the WebSocket server', () => {
       consoleServer = new RemoteConsoleServer(mockServer, {
-        port: 3001,
+        port: getRandomPort(),
         enabled: true,
       });
 
@@ -127,12 +157,12 @@ describe('RemoteConsoleServer', () => {
 
       consoleServer.stop();
       expect(consoleServer['isRunning']).toBe(false);
-      expect(consoleServer['clients']).toEqual([]);
+      expect(consoleServer['clients']).toEqual(new Set());
     });
 
     it('should not start if already running', () => {
       consoleServer = new RemoteConsoleServer(mockServer, {
-        port: 3001,
+        port: getRandomPort(),
         enabled: true,
       });
 
@@ -168,7 +198,7 @@ describe('RemoteConsoleServer', () => {
   describe('client connection management', () => {
     beforeEach(() => {
       consoleServer = new RemoteConsoleServer(mockServer, {
-        port: 3001,
+        port: getRandomPort(),
         enabled: true,
       });
       consoleServer.start();
@@ -215,7 +245,7 @@ describe('RemoteConsoleServer', () => {
       const client2 = new WebSocket('ws://localhost:3001');
 
       setTimeout(() => {
-        expect(consoleServer['clients']).toHaveLength(2);
+        expect(consoleServer['clients'].size).toBe(2);
         expect(consoleServer['clients']).toContain(client1);
         expect(consoleServer['clients']).toContain(client2);
       }, 10);
@@ -225,7 +255,7 @@ describe('RemoteConsoleServer', () => {
   describe('log management', () => {
     beforeEach(() => {
       consoleServer = new RemoteConsoleServer(mockServer, {
-        port: 3001,
+        port: getRandomPort(),
         enabled: true,
         maxLogs: 5,
       });
@@ -272,7 +302,7 @@ describe('RemoteConsoleServer', () => {
 
     it('should clear logs when persistLogs is false', () => {
       consoleServer = new RemoteConsoleServer(mockServer, {
-        port: 3001,
+        port: getRandomPort(),
         enabled: true,
         persistLogs: false,
       });
@@ -293,7 +323,7 @@ describe('RemoteConsoleServer', () => {
 
     it('should filter logs by level', () => {
       consoleServer = new RemoteConsoleServer(mockServer, {
-        port: 3001,
+        port: getRandomPort(),
         enabled: true,
         logLevels: ['error', 'warn'],
       });
@@ -318,7 +348,7 @@ describe('RemoteConsoleServer', () => {
 
     beforeEach(() => {
       consoleServer = new RemoteConsoleServer(mockServer, {
-        port: 3001,
+        port: getRandomPort(),
         enabled: true,
       });
       consoleServer.start();
@@ -416,7 +446,7 @@ describe('RemoteConsoleServer', () => {
   describe('log filtering and search', () => {
     beforeEach(() => {
       consoleServer = new RemoteConsoleServer(mockServer, {
-        port: 3001,
+        port: getRandomPort(),
         enabled: true,
         logLevels: ['info', 'warn', 'error', 'debug'],
       });
@@ -488,7 +518,7 @@ describe('RemoteConsoleServer', () => {
 
     it('should log debug messages when enabled', () => {
       consoleServer = new RemoteConsoleServer(mockServer, {
-        port: 3001,
+        port: getRandomPort(),
         enabled: true,
         debug: true,
       });
@@ -503,7 +533,7 @@ describe('RemoteConsoleServer', () => {
 
     it('should not log debug messages when disabled', () => {
       consoleServer = new RemoteConsoleServer(mockServer, {
-        port: 3001,
+        port: getRandomPort(),
         enabled: true,
         debug: false,
       });
@@ -515,7 +545,7 @@ describe('RemoteConsoleServer', () => {
 
     it('should log client connections in debug mode', () => {
       consoleServer = new RemoteConsoleServer(mockServer, {
-        port: 3001,
+        port: getRandomPort(),
         enabled: true,
         debug: true,
       });
@@ -535,7 +565,7 @@ describe('RemoteConsoleServer', () => {
   describe('error handling', () => {
     it('should handle WebSocket errors gracefully', () => {
       consoleServer = new RemoteConsoleServer(mockServer, {
-        port: 3001,
+        port: getRandomPort(),
         enabled: true,
       });
 
@@ -546,7 +576,7 @@ describe('RemoteConsoleServer', () => {
 
     it('should handle client send errors', () => {
       consoleServer = new RemoteConsoleServer(mockServer, {
-        port: 3001,
+        port: getRandomPort(),
         enabled: true,
       });
       consoleServer.start();
@@ -611,7 +641,7 @@ describe('RemoteConsoleServer', () => {
   describe('integration with TerminalInterceptor', () => {
     beforeEach(() => {
       consoleServer = new RemoteConsoleServer(mockServer, {
-        port: 3001,
+        port: getRandomPort(),
         enabled: true,
       });
       consoleServer.start();

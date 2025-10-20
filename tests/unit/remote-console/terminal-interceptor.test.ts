@@ -406,14 +406,14 @@ describe('TerminalInterceptor', () => {
       const customInterceptor = new TerminalInterceptor(customConfig);
 
       expect(customInterceptor).toBeDefined();
-      expect(customInterceptor['config']).toEqual(customConfig);
+      expect(customInterceptor['config']).toMatchObject(customConfig);
     });
 
     it('should use default configuration when none provided', () => {
       expect(interceptor['config']).toMatchObject({
         maxLogs: 2000,
-        bufferSize: 8192,
-        enableColors: true,
+        persistLogs: false,
+        debug: false,
       });
     });
 

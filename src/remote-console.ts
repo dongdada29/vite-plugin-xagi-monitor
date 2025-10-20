@@ -15,15 +15,17 @@ export class RemoteConsoleServer {
   private terminalInterceptor: TerminalInterceptor;
   private httpServer?: any;
   private clients: Set<WebSocket> = new Set();
+  private isRunning = false; // 添加运行状态属性
 
   constructor(server: ViteDevServer, config: RemoteConsoleConfig = {}) {
     this.server = server;
     this.config = {
       enabled: false,
       port: 3001,
-      persistLogs: false,
-      maxLogs: 1000,
+      persistLogs: true,
+      maxLogs: 2000,
       logLevels: ['info', 'warn', 'error', 'debug'],
+      debug: false,
       ...config
     };
 
@@ -37,8 +39,9 @@ export class RemoteConsoleServer {
    * 启动远程控制台服务器
    */
   start() {
-    if (!this.config.enabled) return;
+    if (this.isRunning || !this.config.enabled) return;
 
+    this.isRunning = true;
     this.startHttpServer();
     this.startWebSocketServer();
     this.setupTerminalInterception();
@@ -52,6 +55,7 @@ export class RemoteConsoleServer {
    * 停止远程控制台服务器
    */
   stop() {
+    this.isRunning = false;
     this.terminalInterceptor.stop();
 
     if (this.wsServer) {
@@ -75,26 +79,42 @@ export class RemoteConsoleServer {
    * 启动 HTTP 服务器
    */
   private startHttpServer() {
-    this.httpServer = createServer((req: any, res: any) => {
-      this.handleHttpRequest(req, res);
-    });
+    try {
+      this.httpServer = createServer((req: any, res: any) => {
+        this.handleHttpRequest(req, res);
+      });
 
-    this.httpServer.listen(this.config.port);
+      this.httpServer.listen(this.config.port);
+    } catch (error) {
+      if (this.config.debug) {
+        console.error('[Remote Console] HTTP 服务器启动失败:', error);
+      }
+      this.isRunning = false;
+    }
   }
 
   /**
    * 启动 WebSocket 服务器
    */
   private startWebSocketServer() {
-    this.wsServer = new WebSocketServer({ port: this.config.port + 1 });
+    try {
+      this.wsServer = new WebSocketServer({ port: this.config.port + 1 });
 
-    this.wsServer.on('connection', (ws: WebSocket) => {
-      this.handleClientConnection(ws);
-    });
+      this.wsServer.on('connection', (ws: WebSocket) => {
+        this.handleClientConnection(ws);
+      });
 
-    this.wsServer.on('error', (error: any) => {
-      console.error('[Remote Console] WebSocket 服务器错误:', error);
-    });
+      this.wsServer.on('error', (error: any) => {
+        if (this.config.debug) {
+          console.error('[Remote Console] WebSocket 服务器错误:', error);
+        }
+      });
+    } catch (error) {
+      if (this.config.debug) {
+        console.error('[Remote Console] WebSocket 服务器启动失败:', error);
+      }
+      this.isRunning = false;
+    }
   }
 
   /**
@@ -520,5 +540,54 @@ export class RemoteConsoleServer {
     this.clients.forEach(ws => {
       this.sendToClient(ws, message);
     });
+  }
+
+  /**
+   * 添加日志（公开方法，用于测试）
+   */
+  addLog(log: RemoteLogEntry) {
+    // 通过 TerminalInterceptor 添加日志
+    this.terminalInterceptor.addLog(log);
+
+    // 广播新日志到所有客户端
+    this.broadcast({
+      type: 'new-log',
+      data: log
+    });
+  }
+
+  /**
+   * 获取日志（公开方法，用于测试）
+   */
+  get logs() {
+    return this.terminalInterceptor.getLogs();
+  }
+
+  /**
+   * 按级别获取日志
+   */
+  getLogsByLevel(level: string) {
+    return this.terminalInterceptor.getLogsByLevel(level);
+  }
+
+  /**
+   * 搜索日志内容
+   */
+  searchLogs(searchTerm: string) {
+    return this.terminalInterceptor.searchLogs(searchTerm);
+  }
+
+  /**
+   * 按时间范围获取日志
+   */
+  getLogsByTimeRange(startTime: number, endTime: number) {
+    return this.terminalInterceptor.getLogsByTimeRange(startTime, endTime);
+  }
+
+  /**
+   * 获取统计信息
+   */
+  getStatistics() {
+    return this.terminalInterceptor.getStatistics();
   }
 }

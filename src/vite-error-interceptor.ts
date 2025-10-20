@@ -98,7 +98,7 @@ export class ViteErrorInterceptor {
       }.bind(this);
 
       next();
-    }.bind(this);
+    }
   }
 
   /**

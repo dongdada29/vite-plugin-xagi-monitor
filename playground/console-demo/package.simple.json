@@ -1,0 +1,14 @@
+{
+  "name": "remote-console-demo-simple",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --config vite.config.simple.ts",
+    "build": "echo 'No build needed for simple version'",
+    "preview": "python3 -m http.server 8080"
+  },
+  "devDependencies": {
+    "vite": "^5.0.8"
+  }
+}

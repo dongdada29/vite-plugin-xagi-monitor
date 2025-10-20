@@ -384,7 +384,7 @@ vite-plugin-xagi-monitor/
 │   ├── remote-console.ts         # 远程控制台服务器
 │   ├── white-screen-monitor.ts   # 白屏监控器
 │   └── design-runtime.ts         # Design 模式运行时
-├── example/                      # 示例项目
+├── playground/                   # 示例项目
 │   ├── src/
 │   │   ├── App.tsx              # React 应用示例
 │   │   ├── error-test.tsx       # 错误测试组件
@@ -419,7 +419,7 @@ pnpm build
 pnpm dev
 
 # 运行示例
-cd example
+cd playground
 pnpm install
 pnpm dev
 ```

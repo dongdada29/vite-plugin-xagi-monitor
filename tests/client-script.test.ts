@@ -138,7 +138,7 @@ describe('Client Script Integration Tests', () => {
     script(window, document);
 
     try {
-      await window.fetch('http://example.com');
+      await window.fetch('http://playground.com');
     } catch (error) {
       // Should handle error without throwing
       expect(error.message).toBe('Network error');

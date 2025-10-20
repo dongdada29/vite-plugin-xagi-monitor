@@ -1,0 +1,349 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.App {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  border-radius: 16px;
+  padding: 2rem;
+  color: white;
+}
+
+.app-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.app-header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.app-header p {
+  font-size: 1.2rem;
+  opacity: 0.9;
+}
+
+.tab-navigation {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.tab-button {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.tab-button:hover {
+  background: rgba(255,255,255,0.2);
+  transform: translateY(-2px);
+}
+
+.tab-button.active {
+  background: rgba(255,255,255,0.3);
+  border-color: rgba(255,255,255,0.4);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.main-content {
+  background: rgba(255,255,255,0.95);
+  border-radius: 12px;
+  padding: 2rem;
+  color: #1a1a1a;
+  min-height: 500px;
+}
+
+.overview-section {
+  text-align: center;
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+.status-card {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: left;
+  transition: all 0.3s ease;
+}
+
+.status-card.active {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.status-card.inactive {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.status-card h3 {
+  margin-top: 0;
+  color: #374151;
+}
+
+.status-card.active h3 {
+  color: #166534;
+}
+
+.status-card.inactive h3 {
+  color: #dc2626;
+}
+
+.demo-section {
+  text-align: center;
+}
+
+.demo-section h2 {
+  color: #1f2937;
+  margin-bottom: 1rem;
+}
+
+.button-group {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin: 1.5rem 0;
+  flex-wrap: wrap;
+}
+
+.test-button {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.test-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);
+}
+
+.test-button.error {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+.test-button.error:hover {
+  box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.3);
+}
+
+.test-button.console {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.test-button.console:hover {
+  box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3);
+}
+
+.test-button.warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.test-button.warning:hover {
+  box-shadow: 0 10px 15px -3px rgba(245, 158, 11, 0.3);
+}
+
+.test-button.design {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+}
+
+.test-button.design:hover {
+  box-shadow: 0 10px 15px -3px rgba(139, 92, 246, 0.3);
+}
+
+.feature-info {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-top: 2rem;
+  text-align: left;
+}
+
+.feature-info h4 {
+  margin-top: 0;
+  color: #374151;
+}
+
+.feature-info ul {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.feature-info li {
+  margin-bottom: 0.5rem;
+  color: #6b7280;
+}
+
+.demo-info {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 2rem 0;
+  text-align: left;
+  color: #1e40af;
+}
+
+.demo-info h3 {
+  margin-top: 0;
+  color: #1e40af;
+}
+
+.demo-info ul {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+}
+
+.demo-info li {
+  margin-bottom: 0.5rem;
+}
+
+.design-playground {
+  margin: 2rem 0;
+}
+
+.editable-element {
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.editable-element:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.demo-button {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin: 0.5rem;
+}
+
+.demo-button:hover {
+  background: #2563eb;
+}
+
+.demo-actions {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.demo-actions h3 {
+  color: #1f2937;
+  margin-bottom: 1rem;
+}
+
+.demo-actions button {
+  background: #6b7280;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  margin: 0 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.demo-actions button:hover {
+  background: #4b5563;
+  transform: translateY(-1px);
+}
+
+.hint {
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin-top: 1rem;
+}
+
+.hint code {
+  background: #f1f5f9;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  color: #1e293b;
+}
+
+.app-footer {
+  text-align: center;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255,255,255,0.2);
+  opacity: 0.8;
+}
+
+/* 保持原有的卡片样式兼容性 */
+.card {
+  padding: 2em;
+  margin: 1em 0;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.1);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .App {
+    padding: 1rem;
+  }
+
+  .app-header h1 {
+    font-size: 2rem;
+  }
+
+  .tab-navigation {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .tab-button {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .button-group {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .test-button {
+    width: 100%;
+    max-width: 250px;
+  }
+
+  .status-grid {
+    grid-template-columns: 1fr;
+  }
+}

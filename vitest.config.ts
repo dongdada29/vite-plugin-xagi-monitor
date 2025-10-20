@@ -15,7 +15,7 @@ export default defineConfig({
         'src/**/*.test.ts',
         'src/**/*.spec.ts',
         'tests/**',
-        'example/**',
+        'playground/**',
         '**/*.d.ts',
       ],
     },

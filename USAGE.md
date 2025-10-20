@@ -396,7 +396,7 @@ const PreviewPanel = () => {
 
 ```bash
 # 进入示例目录
-cd example
+cd playground
 
 # 安装依赖
 pnpm install

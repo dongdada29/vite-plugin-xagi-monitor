@@ -115,7 +115,7 @@ appDevMonitor({
 ## 运行示例
 
 ```bash
-cd node_modules/vite-plugin-xagi-monitor/example
+cd node_modules/vite-plugin-xagi-monitor/playground
 npm install
 npm run dev
 ```
